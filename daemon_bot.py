@@ -1,4 +1,12 @@
 #! /usr/bin/python
+"""
+DaemonBot v1.1
+
+Telegram Bot for remote control home or work
+machine
+Coded by: ViCoder32
+"""
+
 import os
 import sys
 import socket
@@ -14,6 +22,15 @@ markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 bot = telebot.TeleBot(os.getenv("TOKEN"))
 
 def get_info_ipv4() -> str:
+    """
+    Returning local or global ipv4
+    
+    no argument - Local ipv4
+    
+    -w, --wan - Global ipv4 
+    
+    Not connection - 127.0.0.1
+    """
     try:
         if "-w" in sys.argv or "--wan" in sys.argv:
             with urlopen("https://ifconfig.me/ip") as res:
@@ -27,18 +44,32 @@ def get_info_ipv4() -> str:
 
 
 def definedistr() -> str:
+    """
+    Returning your linux distribtion from os-release
+    file
+    
+    """
     try:
-        with open('/etc/os-release', 'r') as f:
+        with open('/etc/os-release', 'r', encoding="utf-8") as f:
             raw = f.read()
             return raw.split()[9].split('=')[1].lower()
     except EOFError:
         return "distr"
 def shutdown_machine() -> None:
+    """
+    Crossplatform function for turn off
+    you machine
+    
+    """
     if "win" in sys.platform.lower():
         os.system("shutdown -s -t 0")
     else:
         os.system("shutdown -h now")
 def parse_argument(option: str):
+    """
+    Returning value of terminal argument
+
+    """
     try:
         index = sys.argv.index(option) + 1
         return sys.argv[index]
@@ -47,6 +78,10 @@ def parse_argument(option: str):
     except ValueError:
         return None
 def man_page() -> None:
+    """
+    Manual page
+
+    """
     sys.exit(""" \x1B[33m
 DaemonBot v1.1
     
@@ -98,6 +133,10 @@ def conf_write_value(file: str, param: str, option: str) -> None:
         pass
 
 def init_ssh() -> None:
+    """
+    Installing if not install, and running SSH-server
+
+    """
     if "nt" in os.name:
         pass
         # In development stage
@@ -127,10 +166,18 @@ def init_ssh() -> None:
         os.system("systemctl restart ssh")
 
 def get_uptime():
+    """
+    Returning uptime
+
+    """
     return ' '.join(getoutput("uptime -p").split()[1:])
 
 @bot.message_handler(commands=["start"])
 def get_start(message):
+    """
+    /start activity of DaemonBot
+
+    """
     if message.chat.id != parse_argument("--id"):
         bot.send_message(message.chat.id, "Прошу вас уйти сэр, мой хозяин сегодня не ждет гостей..")
     else:
@@ -143,6 +190,10 @@ def get_start(message):
         bot.send_message(message.chat.id, "Что вам угодно, сэр?", reply_markup=markup)
 @bot.message_handler(content_types=["text"])
 def handler(message):
+    """
+    Message handler
+
+    """
     if "uptime" in message.text and message.chat.id == parse_argument("--id"):
         bot.send_message(message.chat.id, f"Текущий uptime вашей машины {get_uptime()}")
         bot.send_message(message.chat.id, "Еще пожелания, мой лорд?")
@@ -157,6 +208,11 @@ def handler(message):
 
 
 def main():
+    """
+    Entry point
+
+    """
+
     if "-h" in sys.argv or "--help" in sys.argv:
         man_page()
     else:
