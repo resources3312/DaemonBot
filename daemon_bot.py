@@ -1,26 +1,28 @@
 #! /usr/bin/python
-import telebot
-from telebot import types
-from subprocess import getoutput
 import os
 import sys
 import socket
-import requests
+from subprocess import getoutput
+from urllib.request import urlopen
+from urllib.error import URLError
+import telebot
+from telebot import types
 from dotenv import load_dotenv
 load_dotenv()
-global markup    
-markup = types.ReplyKeyboardMarkup(resize_keyboard=True)    
+global markup
+markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 bot = telebot.TeleBot(os.getenv("TOKEN"))
 
 def get_info_ipv4() -> str:
     try:
-        if "-w" in sys.argv or "--wan" in sys.argv:  
-            return requests.get("https://ifconfig.me/ip").text
+        if "-w" in sys.argv or "--wan" in sys.argv:
+            with urlopen("https://ifconfig.me/ip") as res:
+                return res.read().decode()
         else:
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
                 s.connect(("8.8.8.8", 80))
                 return s.getsockname()[0]
-    except (requests.RequestException, socket.error):
+    except (URLError, socket.error):
         return "127.0.0.1"
 
 
@@ -101,16 +103,13 @@ def init_ssh() -> None:
         # In development stage
     else:
         if "not found" in getoutput("which sshd"):
-            apt = ['debian', 'ubuntu']
             match definedistr():
                 case "debian":
                     os.system('apt update -y')
                     os.system('apt install openssh-server -y')
-                
                 case "ubuntu":
                     os.system('apt update -y')
                     os.system('apt install openssh-server -y')
-
                 case "centos":
                     pass
                 case "fedora":
@@ -132,7 +131,6 @@ def get_uptime():
 
 @bot.message_handler(commands=["start"])
 def get_start(message):
-    
     if message.chat.id != parse_argument("--id"):
         bot.send_message(message.chat.id, "Прошу вас уйти сэр, мой хозяин сегодня не ждет гостей..")
     else:
@@ -142,23 +140,20 @@ def get_start(message):
         button_uptime = types.KeyboardButton("⌛️Получить uptime")
         button_ssh = types.KeyboardButton("Поднять ssh")
         markup.add(button_power_off, button_uptime, button_ssh)
-        bot.send_message(message.chat.id, "Что вам угодно, сэр?", reply_markup=markup) 
+        bot.send_message(message.chat.id, "Что вам угодно, сэр?", reply_markup=markup)
 @bot.message_handler(content_types=["text"])
 def handler(message):
     if "uptime" in message.text and message.chat.id == parse_argument("--id"):
         bot.send_message(message.chat.id, f"Текущий uptime вашей машины {get_uptime()}")
         bot.send_message(message.chat.id, "Еще пожелания, мой лорд?")
-    
     elif "ssh" in message.text and message.chat.id == parse_argument("--id"):
         init_ssh()
         bot.send_message(message.chat.id, "Ssh сервер готов к использованию, мой темный лорд..")
         bot.send_message(message.chat.id, f"Адрес для подключения: {get_info_ipv4()}")
-    
     elif "машину" in message.text and message.chat.id == parse_argument("--id"):
         bot.send_message(message.chat.id, "Машина была отключена сэр, доброго вам дня..")
         shutdown_machine()
-        
-    
+
 
 
 def main():
@@ -167,4 +162,4 @@ def main():
     else:
         bot.infinity_polling()
 if __name__ == '__main__':
-    main() 
+    main()
