@@ -6,7 +6,6 @@ Telegram Bot for remote control home or work
 machine
 Coded by: ViCoder32
 """
-
 import os
 import sys
 import socket
@@ -51,10 +50,12 @@ def definedistr() -> str:
     """
     try:
         with open('/etc/os-release', 'r', encoding="utf-8") as f:
-            raw = f.read()
-            return raw.split()[9].split('=')[1].lower()
+            return f.read().split()[9].split('=')[1].lower()
     except EOFError:
         return "distr"
+
+
+        
 def shutdown_machine() -> None:
     """
     Crossplatform function for turn off
