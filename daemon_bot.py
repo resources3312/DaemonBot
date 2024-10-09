@@ -66,18 +66,20 @@ def shutdown_machine() -> None:
         os.system("shutdown -s -t 0")
     else:
         os.system("shutdown -h now")
+
 def parse_argument(option: str):
     """
-    Returning value of terminal argument
-
+    
+    Function for parse short and long arguments of command line
+    
     """
     try:
-        index = sys.argv.index(option) + 1
-        return sys.argv[index]
-    except IndexError:
+        for i in sys.argv:
+            if option in i:
+                return sys.argv[i.index(option) + 1 if len(option) > 2 else 2]
+    except (ValueError, IndexError):
         return None
-    except ValueError:
-        return None
+
 def man_page() -> None:
     """
     Manual page
@@ -92,7 +94,7 @@ DaemonBot v1.1
         
         -w, --wan - Set you own ipv4, for debug or WAN connection
         
-        --id - Set your telegram id, for security
+        -i, --id - Set your telegram id, for security
   \x1B[0m""")
 
 def conf_write_option(file: str, param: str, option: str) -> None:
@@ -179,7 +181,7 @@ def get_start(message):
     /start activity of DaemonBot
 
     """
-    if message.chat.id != parse_argument("--id"):
+    if message.chat.id != parse_argument("-i"):
         bot.send_message(message.chat.id, "Прошу вас уйти сэр, мой хозяин сегодня не ждет гостей..")
     else:
         bot.send_message(message.chat.id, "Приветствую вас, мой темный лорд..")
@@ -195,14 +197,14 @@ def handler(message):
     Message handler
 
     """
-    if "uptime" in message.text and message.chat.id == parse_argument("--id"):
+    if "uptime" in message.text and message.chat.id == parse_argument("-i"):
         bot.send_message(message.chat.id, f"Текущий uptime вашей машины {get_uptime()}")
         bot.send_message(message.chat.id, "Еще пожелания, мой лорд?")
-    elif "ssh" in message.text and message.chat.id == parse_argument("--id"):
+    elif "ssh" in message.text and message.chat.id == parse_argument("-i"):
         init_ssh()
         bot.send_message(message.chat.id, "Ssh сервер готов к использованию, мой темный лорд..")
         bot.send_message(message.chat.id, f"Адрес для подключения: {get_info_ipv4()}")
-    elif "машину" in message.text and message.chat.id == parse_argument("--id"):
+    elif "машину" in message.text and message.chat.id == parse_argument("-i"):
         bot.send_message(message.chat.id, "Машина была отключена сэр, доброго вам дня..")
         shutdown_machine()
 
