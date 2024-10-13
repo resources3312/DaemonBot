@@ -17,7 +17,6 @@ from telebot import types
 from dotenv import load_dotenv
 load_dotenv()
 global markup
-markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 bot = telebot.TeleBot(os.getenv("TOKEN"))
 
 def get_info_ipv4() -> str:
@@ -74,7 +73,7 @@ def parse_argument(option: str):
     
     """
     try:
-        for i in sys.argv:
+        for i in sys.argv[1:]:  # Saving memory
             if option in i:
                 return sys.argv[i.index(option) + 1 if len(option) > 2 else 2]
     except (ValueError, IndexError):
@@ -111,9 +110,7 @@ def conf_write_option(file: str, param: str, option: str) -> None:
                 data = text.replace(raw[index], option)
                 with open(file, "w", encoding="utf-8") as f:
                     f.write(data)
-    except EOFError:
-        pass
-    except IndexError:
+    except (EOFError, IndexError):
         pass
 
 def conf_write_value(file: str, param: str, option: str) -> None:
@@ -130,9 +127,7 @@ def conf_write_value(file: str, param: str, option: str) -> None:
                 data = text.replace(raw[index], option)
                 with open(file, "w", encoding="utf-8") as f:
                     f.write(data)
-    except EOFError:
-        pass
-    except IndexError:
+    except (EOFError, IndexError):
         pass
 
 def init_ssh() -> None:
@@ -174,7 +169,13 @@ def get_uptime():
 
     """
     return ' '.join(getoutput("uptime -p").split()[1:])
-
+def get_keyboard():
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    button_power_off = types.KeyboardButton("🖥Отключить машину")
+    button_uptime = types.KeyboardButton("⌛️Получить uptime")
+    button_ssh = types.KeyboardButton("Поднять ssh")
+    markup.add(button_power_off, button_uptime, button_ssh)
+    return markup
 @bot.message_handler(commands=["start"])
 def get_start(message):
     """
@@ -185,12 +186,7 @@ def get_start(message):
         bot.send_message(message.chat.id, "Прошу вас уйти сэр, мой хозяин сегодня не ждет гостей..")
     else:
         bot.send_message(message.chat.id, "Приветствую вас, мой темный лорд..")
-        bot.send_message(message.chat.id, f"Текущий uptime вашей машины {get_uptime()}")
-        button_power_off = types.KeyboardButton("🖥Отключить машину")
-        button_uptime = types.KeyboardButton("⌛️Получить uptime")
-        button_ssh = types.KeyboardButton("Поднять ssh")
-        markup.add(button_power_off, button_uptime, button_ssh)
-        bot.send_message(message.chat.id, "Что вам угодно, сэр?", reply_markup=markup)
+        bot.send_message(message.chat.id, f"Текущий uptime вашей машины {get_uptime()}", reply_markup=get_keyboard())
 @bot.message_handler(content_types=["text"])
 def handler(message):
     """
